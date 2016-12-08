@@ -205,8 +205,10 @@ void comm_task(void)
 						 i = uart_get_buffer();
 						 if (i < UART_QUEUE_NUM)
 						 { //找到了空闲buffer, 准备应答
-							 uart_q[i].tdata[0] = FRAME_STX;	   //帧头
-							 uart_q[i].tdata[1] = msg_buf[1];	   //目的地址
+                             uart_q[i].package_type = 1;         //设备自身的数据包
+                             
+							 uart_q[i].tdata[0] = FRAME_STX;	 //帧头
+							 uart_q[i].tdata[1] = msg_buf[1];	 //目的地址
 							 uart_q[i].tdata[2] = gl_comm_addr;  //源地址
 							 if (gl_comm_addr == CMD_ADDR_UNSOLV)
 							 { //本设备无有效地址
@@ -244,6 +246,8 @@ void comm_task(void)
 						 i = uart_get_buffer();
 						 if (i < UART_QUEUE_NUM)
 						 { //找到了空闲buffer, 准备应答
+                             uart_q[i].package_type = 1;         //设备自身的数据包
+                             
 							 uart_q[i].tdata[0] = FRAME_STX;	//帧头
 							 uart_q[i].tdata[1] = msg_buf[1];	//目的地址
 							 uart_q[i].tdata[2] = gl_comm_addr;	    //源地址																 
@@ -276,6 +280,8 @@ void comm_task(void)
 						 i = uart_get_buffer();
 						 if (i < UART_QUEUE_NUM)
 						 { //找到了空闲buffer, 准备应答
+                             uart_q[i].package_type = 1;         //设备自身的数据包
+                             
 							 uart_q[i].tdata[0] = FRAME_STX;	//帧头
 							 uart_q[i].tdata[1] = msg_buf[1];	//目的地址
 							 uart_q[i].tdata[2] = gl_comm_addr;	    //源地址																 
@@ -299,11 +305,13 @@ void comm_task(void)
                                 i = uart_get_buffer();
                                 if (i < UART_QUEUE_NUM)
                                 { //找到了空闲buffer, 写入data
+                                    uart_q[i].package_type = 1;         //设备自身的数据包
+                                    
                                     uart_q[i].tdata[0] = FRAME_STX;
-                                  uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
-                                  uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
-                                  uart_q[i].tdata[3] = 0x1E;
-                                  uart_q[i].tdata[4] = CMD_ZL_PRE;															
+                                    uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
+                                    uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
+                                    uart_q[i].tdata[3] = 0x1E;
+                                    uart_q[i].tdata[4] = CMD_ZL_PRE;															
                                     uart_q[i].tdata[5] = 0x1C;
                                     uart_q[i].tdata[6] = 0x08;
                                     uart_q[i].tdata[7] = HIGH(ad_sensor_mask_LR);    
@@ -337,15 +345,17 @@ void comm_task(void)
                                 i = uart_get_buffer();
                                 if (i < UART_QUEUE_NUM)
                                 { //找到了空闲buffer, 写入data
+                                    uart_q[i].package_type = 1;         //设备自身的数据包
+                                    
                                     uart_q[i].tdata[0] = FRAME_STX;
-                                  uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
-                                  uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
-                                  uart_q[i].tdata[3] = 0x05;
-                                  uart_q[i].tdata[4] = CMD_ZL_PRE;
-                                  uart_q[i].tdata[5] = 0x03;
-                                  uart_q[i].tdata[6] = 0x19;
-                                  uart_q[i].tdata[7] = system_2or1;
-                                  uart_q[i].tdata[8] = (alarm_out_flag & 0x18) >> 3;														
+                                    uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
+                                    uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
+                                    uart_q[i].tdata[3] = 0x05;
+                                    uart_q[i].tdata[4] = CMD_ZL_PRE;
+                                    uart_q[i].tdata[5] = 0x03;
+                                    uart_q[i].tdata[6] = 0x19;
+                                    uart_q[i].tdata[7] = system_2or1;
+                                    uart_q[i].tdata[8] = (alarm_out_flag & 0x18) >> 3;														
                                     uart_q[i].len = 10;
                                 } 
                                 else
@@ -360,6 +370,8 @@ void comm_task(void)
                                 i = uart_get_buffer();
                                 if (i < UART_QUEUE_NUM)
                                 { //找到了空闲buffer, 写入data
+                                    uart_q[i].package_type = 1;         //设备自身的数据包
+                                    
                                     uart_q[i].tdata[0] = FRAME_STX;
                                     uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
                                     uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
@@ -390,6 +402,8 @@ void comm_task(void)
                                 i = uart_get_buffer();
                                 if (i < UART_QUEUE_NUM)
                                 { //找到了空闲buffer, 写入data
+                                    uart_q[i].package_type = 1;         //设备自身的数据包
+                                    
                                     uart_q[i].tdata[0] = FRAME_STX;
                                     uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
                                     uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
@@ -427,6 +441,8 @@ void comm_task(void)
                                 i = uart_get_buffer();
                                 if (i < UART_QUEUE_NUM)
                                 { //找到了空闲buffer, 写入data
+                                    uart_q[i].package_type = 1;         //设备自身的数据包
+                                    
                                     uart_q[i].tdata[0] = FRAME_STX;
                                     uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
                                     uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
@@ -464,6 +480,8 @@ void comm_task(void)
                                 i = uart_get_buffer();
                                 if (i < UART_QUEUE_NUM)
                                 { //找到了空闲buffer, 写入data
+                                    uart_q[i].package_type = 1;         //设备自身的数据包
+                                    
                                     uart_q[i].tdata[0] = FRAME_STX;
                                     uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
                                     uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
@@ -646,8 +664,10 @@ void comm_task(void)
 		i = uart_get_buffer();
 		if (i < UART_QUEUE_NUM)				 
 		{ //找到了空闲buffer, 写入data
+            uart_q[i].package_type = 0;         //来自下位机的数据包
+            
 			uart_q[i].tdata[0] = FRAME_STX;
-		  memcpy(&uart_q[i].tdata[1], msg2_buf, msg2_buf[2] + 3);                    
+            memcpy(&uart_q[i].tdata[1], msg2_buf, msg2_buf[2] + 3);                    
 			uart_q[i].len = msg2_buf[2] + 5;
 		}
 		else
@@ -660,19 +680,27 @@ void comm_task(void)
   }//end if (msg2_buf_valid)	  
 //
   //3. UART1 队列发送
-  if ((uart_q_index == 0xFF) && (recv_state == FSA_INIT) && (gl_ack_tick == 0))
+  if ((uart_q_index == 0xFF) && (recv_state == FSA_INIT))
   {	//UART1无进入发送流程的队列项, 找是否有等待发送的项
     for (i=0; i<UART_QUEUE_NUM; i++)
     {
-			if (uart_q[i].flag == 1)
-			{	//有等待发送的项，安排此项发送
-				uart_q[i].flag = 2;
-				uart_q_index = i;
-				memcpy(trans_buf, uart_q[i].tdata, uart_q[i].len - 1);
-				trans_size = uart_q[i].len;
-				uart_start_trans();
-				break;
-			}
+        if ((uart_q[i].flag == 1) && (uart_q[i].package_type == 0)){
+            //来自下位机的数据包:有等待发送的项，安排此项发送
+            uart_q[i].flag = 2;
+            uart_q_index = i;
+            memcpy(trans_buf, uart_q[i].tdata, uart_q[i].len - 1);
+            trans_size = uart_q[i].len;
+            uart_start_trans();
+            break;
+        }else if((uart_q[i].flag == 1) && (uart_q[i].package_type == 1) && (gl_ack_tick == 0)){
+            //设备自身的数据包:有等待发送的项，安排此项发送
+            uart_q[i].flag = 2;
+            uart_q_index = i;
+            memcpy(trans_buf, uart_q[i].tdata, uart_q[i].len - 1);
+            trans_size = uart_q[i].len;
+            uart_start_trans();
+            break;
+        }
     }
   }
   
@@ -681,15 +709,15 @@ void comm_task(void)
   {	//UART2无进入发送流程的队列项, 找是否有等待发送的项
     for (i=0; i<UART2_QUEUE_NUM; i++)
     {
-			if (uart2_q[i].flag == 1)
-			{	//有等待发送的项，安排此项发送
-				uart2_q[i].flag = 2;
-				uart2_q_index = i;
-				memcpy(trans2_buf, uart2_q[i].tdata, uart2_q[i].len - 1);
-				trans2_size = uart2_q[i].len;
-				uart2_start_trans();
-				break;
-			}
+        if (uart2_q[i].flag == 1)
+        {	//有等待发送的项，安排此项发送
+            uart2_q[i].flag = 2;
+            uart2_q_index = i;
+            memcpy(trans2_buf, uart2_q[i].tdata, uart2_q[i].len - 1);
+            trans2_size = uart2_q[i].len;
+            uart2_start_trans();
+            break;
+        }
     }
   }  
 }//end FUNC()
@@ -795,6 +823,8 @@ void get_alarm_detail_info(void)
     if (i < UART_QUEUE_NUM)
     { 
         //找到了空闲buffer, 写入data
+        uart_q[i].package_type = 1;         //设备自身的数据包
+        
         uart_q[i].tdata[0] = FRAME_STX;
         uart_q[i].tdata[1] = 0x01;     	      //目的地址
         uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
@@ -828,6 +858,8 @@ void get_alarm_detail_info(void)
     if (i < UART_QUEUE_NUM)
     { 
         //找到了空闲buffer, 写入data
+        uart_q[i].package_type = 1;         //设备自身的数据包
+        
         uart_q[i].tdata[0] = FRAME_STX;
         uart_q[i].tdata[1] = 0x01;	          //目的地址
         uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
@@ -852,6 +884,8 @@ void get_alarm_detail_info(void)
     i = uart_get_buffer();
     if (i < UART_QUEUE_NUM)
     { //找到了空闲buffer, 写入data
+        uart_q[i].package_type = 1;         //设备自身的数据包
+        
         uart_q[i].tdata[0] = FRAME_STX;
         uart_q[i].tdata[1] = 0x01;	          //目的地址
         uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
@@ -883,6 +917,8 @@ void get_alarm_detail_info(void)
     i = uart_get_buffer();
     if (i < UART_QUEUE_NUM)
     { //找到了空闲buffer, 写入data
+        uart_q[i].package_type = 1;         //设备自身的数据包
+        
         uart_q[i].tdata[0] = FRAME_STX;
         uart_q[i].tdata[1] = 0x01;	          //目的地址
         uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 

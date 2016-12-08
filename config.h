@@ -43,8 +43,8 @@
 
 /* UART */
 #define	FRAME_STX        0x16	   // Frame header
-#define	MAX_RecvFrame      50    // 接收缓存区大小
-#define	MAX_TransFrame     50    // 发送缓存区大小
+#define	MAX_RecvFrame      45    // 接收缓存区大小
+#define	MAX_TransFrame     45    // 发送缓存区大小
 #define RECV_TIMEOUT        4    // 字节间的最大时间间隔, 单位为tick
                                  // 最小值可以为1, 如果为0则表示不进行超时判定
                           
@@ -57,7 +57,8 @@ typedef struct strUART_Q
   Byte  len;					      //数据包有效长度(含校验字节)
 //Byte  need_wait_ack;      //是否需要等待目的机应答： 0 - 否； 1 - 是
 //Byte  wait_ack_time;			//发送后等待目的机应答所剩余的时间，单位： tick 
-                            //  当flag=3,且等待应答剩余时间减为0时，重发                                    
+                            //  当flag=3,且等待应答剩余时间减为0时，重发       
+  Byte  package_type;       //0-来自下位机的数据包;1-设备自身的数据包
 }sUART_Q;
 
 //#define UART_WAIT_ACK  (2000/SCHEDULER_TICK)	  //发送后等待目的机应答所允许的最大时间, 单位：tick

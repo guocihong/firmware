@@ -194,6 +194,8 @@ void ad_task(void)
 			 i = uart_get_buffer();
 			 if (i < UART_QUEUE_NUM)
 			 { //找到了空闲buffer, 写入data
+                 uart_q[i].package_type = 1;         //设备自身的数据包
+                 
 				 uart_q[i].tdata[0] = FRAME_STX;
 				 uart_q[i].tdata[1] = 0xFF;
 				 uart_q[i].tdata[2] = 0x00;
@@ -430,6 +432,8 @@ void check_still_stress(index)
   ad_alarm_base &= ~(1 << 9);
 }
 
+//2016-12-07新增
+//保存报警详细信息
 void save_alarm_detail_info(void)
 {
     Byte i;

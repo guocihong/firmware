@@ -29,6 +29,8 @@ extern  data  Byte  gl_dk_tick;  	 //门磁检测计时tick
 extern idata  Byte  system_status;   //系统状态	
 static  data  Byte  dk_read_state;   //task state
 
+//2016-12-07新增
+//保存报警详细信息
 extern void save_alarm_detail_info(void);
 
 /*F**************************************************************************
