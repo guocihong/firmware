@@ -138,5 +138,13 @@ typedef struct strAD_BASE
 
 #define BRT_BAUD_RATE   BRT_BAUD_9600
 
-
+//2016-12-07新增
+typedef struct strAlarmDetailInfo
+{
+    Union16  InstantSampleValue[14];//瞬间张力
+    sAD_BASE StaticBaseValue[14];   //静态基准
+    Uint16  ExternalAlarm     ;    //外力报警            
+    Uint16  StaticAlarm;	       //静态报警                                					
+    Byte    DoorKeepAlarm;         //门磁报警
+}sAlarmDetailInfo;
 #endif    /* _CONFIG_H_ */

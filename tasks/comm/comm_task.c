@@ -27,8 +27,8 @@
 #define REPLY_DLY   (100/SCHEDULER_TICK)    //收到PC命令后的应答延时
 
 /*_____ D E C L A R A T I O N ______________________________________________*/
-extern idata  Byte  gl_ack_tick;	            /* 应答延时计时 tick */
-extern xdata  Byte  gl_reply_tick;              /* 设备返回延时*/
+extern idata  Uint16 gl_ack_tick;	            /* 应答延时计时 tick */
+extern xdata  Byte   gl_reply_tick;              /* 设备返回延时*/
 
 /* UART1 */	
 extern xdata  Byte  msg_buf[MAX_RecvFrame];     // received message, used for proceding
@@ -117,9 +117,10 @@ extern const  Byte   AREA_R_INDEX[7];  //右防区各道对应的板上(程序) index
 /* 传感器采样偏差 */
 extern xdata  Uint16   sensor_sample_offset[14];    //传感器采样偏差：没有外力时，传感器采样值不为0，大约310左右，需要矫正。瞬间张力 = 采样值 - 采样偏差                 
 
+//2016-12-07新增
+extern xdata  sAlarmDetailInfo  AlarmDetailInfo;//保存最后一次报警详细信息
+
 extern void check_still_stress(index);
-
-
 
 /*F**************************************************************************
 * NAME: comm_task_init
@@ -294,285 +295,285 @@ void comm_task(void)
 						 switch (msg_buf[5]) 
 						 {					 																							
 							 case 0x10: //读配置参数
-													//在UART队列中找空闲Buffer
-													i = uart_get_buffer();
-													if (i < UART_QUEUE_NUM)
-													{ //找到了空闲buffer, 写入data
-														uart_q[i].tdata[0] = FRAME_STX;
-													  uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
-													  uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
-													  uart_q[i].tdata[3] = 0x1E;
-													  uart_q[i].tdata[4] = CMD_ZL_PRE;															
-														uart_q[i].tdata[5] = 0x1C;
-														uart_q[i].tdata[6] = 0x08;
-														uart_q[i].tdata[7] = HIGH(ad_sensor_mask_LR);    
-														uart_q[i].tdata[8] = LOW(ad_sensor_mask_LR);
-														uart_q[i].tdata[9]  = HIGH(ad_still_dn);
-														uart_q[i].tdata[10] = LOW(ad_still_dn);
-														uart_q[i].tdata[11] = HIGH(ad_still_up);
-														uart_q[i].tdata[12] = LOW(ad_still_up);
-														uart_q[i].tdata[13]  = 66;   //ad_still_Ddn;
-														for (j=0; j<7; j++)
-														  uart_q[i].tdata[14 + j] = ad_still_Dup[AREA_L_INDEX[j]]; 
-														uart_q[i].tdata[21] = 0;
-														for (j=0; j<7; j++)
-														  uart_q[i].tdata[22 + j] = ad_still_Dup[AREA_R_INDEX[j]]; 
-														uart_q[i].tdata[29] = 0;																											
-														uart_q[i].tdata[30] = system_2or1;
-														uart_q[i].tdata[31] = gl_addr_origin;
-														uart_q[i].tdata[32] = (Byte)(((Uint32)beep_during_temp * SCHEDULER_TICK) / 1000);	//声光报警输出时间
-														uart_q[i].tdata[33] = (Byte)(((Uint32)ld_during_temp * SCHEDULER_TICK) / 1000);	  //联动输出时间              																					
-														uart_q[i].len = 35;
-													}
-													else
-													{ //无空闲buffer, 丢弃本命令
-														//检查: 若有队列项正在发送, 等待它完成
-														while (uart_q_index != 0xFF);	//若死锁,将引起 WDT 复位				           
-													}                 
-													break;
+                                //在UART队列中找空闲Buffer
+                                i = uart_get_buffer();
+                                if (i < UART_QUEUE_NUM)
+                                { //找到了空闲buffer, 写入data
+                                    uart_q[i].tdata[0] = FRAME_STX;
+                                  uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
+                                  uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
+                                  uart_q[i].tdata[3] = 0x1E;
+                                  uart_q[i].tdata[4] = CMD_ZL_PRE;															
+                                    uart_q[i].tdata[5] = 0x1C;
+                                    uart_q[i].tdata[6] = 0x08;
+                                    uart_q[i].tdata[7] = HIGH(ad_sensor_mask_LR);    
+                                    uart_q[i].tdata[8] = LOW(ad_sensor_mask_LR);
+                                    uart_q[i].tdata[9]  = HIGH(ad_still_dn);
+                                    uart_q[i].tdata[10] = LOW(ad_still_dn);
+                                    uart_q[i].tdata[11] = HIGH(ad_still_up);
+                                    uart_q[i].tdata[12] = LOW(ad_still_up);
+                                    uart_q[i].tdata[13]  = 66;   //ad_still_Ddn;
+                                    for (j=0; j<7; j++)
+                                      uart_q[i].tdata[14 + j] = ad_still_Dup[AREA_L_INDEX[j]]; 
+                                    uart_q[i].tdata[21] = 0;
+                                    for (j=0; j<7; j++)
+                                      uart_q[i].tdata[22 + j] = ad_still_Dup[AREA_R_INDEX[j]]; 
+                                    uart_q[i].tdata[29] = 0;																											
+                                    uart_q[i].tdata[30] = system_2or1;
+                                    uart_q[i].tdata[31] = gl_addr_origin;
+                                    uart_q[i].tdata[32] = (Byte)(((Uint32)beep_during_temp * SCHEDULER_TICK) / 1000);	//声光报警输出时间
+                                    uart_q[i].tdata[33] = (Byte)(((Uint32)ld_during_temp * SCHEDULER_TICK) / 1000);	  //联动输出时间              																					
+                                    uart_q[i].len = 35;
+                                }
+                                else
+                                { //无空闲buffer, 丢弃本命令
+                                    //检查: 若有队列项正在发送, 等待它完成
+                                    while (uart_q_index != 0xFF);	//若死锁,将引起 WDT 复位				           
+                                }                 
+                                break;
 												
 							 case 0x11: //读报警输出口状态
-													//在UART队列中找空闲Buffer
-													i = uart_get_buffer();
-													if (i < UART_QUEUE_NUM)
-													{ //找到了空闲buffer, 写入data
-														uart_q[i].tdata[0] = FRAME_STX;
-													  uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
-													  uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
-													  uart_q[i].tdata[3] = 0x05;
-													  uart_q[i].tdata[4] = CMD_ZL_PRE;
-													  uart_q[i].tdata[5] = 0x03;
-													  uart_q[i].tdata[6] = 0x19;
-													  uart_q[i].tdata[7] = system_2or1;
-													  uart_q[i].tdata[8] = (alarm_out_flag & 0x18) >> 3;														
-														uart_q[i].len = 10;
-													} 
-													else
-													{ //无空闲buffer, 丢弃本命令
-														//检查: 若有队列项正在发送, 等待它完成
-														while (uart_q_index != 0xFF);	//若死锁,将引起 WDT 复位				           
-													}                
-													break;
+                                //在UART队列中找空闲Buffer
+                                i = uart_get_buffer();
+                                if (i < UART_QUEUE_NUM)
+                                { //找到了空闲buffer, 写入data
+                                    uart_q[i].tdata[0] = FRAME_STX;
+                                  uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
+                                  uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
+                                  uart_q[i].tdata[3] = 0x05;
+                                  uart_q[i].tdata[4] = CMD_ZL_PRE;
+                                  uart_q[i].tdata[5] = 0x03;
+                                  uart_q[i].tdata[6] = 0x19;
+                                  uart_q[i].tdata[7] = system_2or1;
+                                  uart_q[i].tdata[8] = (alarm_out_flag & 0x18) >> 3;														
+                                    uart_q[i].len = 10;
+                                } 
+                                else
+                                { //无空闲buffer, 丢弃本命令
+                                    //检查: 若有队列项正在发送, 等待它完成
+                                    while (uart_q_index != 0xFF);	//若死锁,将引起 WDT 复位				           
+                                }                
+                                break;
 													
 							 case 0x12: //读报警实时信息
-													//在UART队列中找空闲Buffer
-													i = uart_get_buffer();
-													if (i < UART_QUEUE_NUM)
-													{ //找到了空闲buffer, 写入data
-														uart_q[i].tdata[0] = FRAME_STX;
-														uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
-														uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
-														uart_q[i].tdata[3] = 0x0A;
-														uart_q[i].tdata[4] = CMD_ZL_PRE;
-														uart_q[i].tdata[5] = 0x08;
-														uart_q[i].tdata[6] = 0x1A;													
-														uart_q[i].tdata[7] = HIGH(ad_sensor_mask_LR);    
-														uart_q[i].tdata[8] = LOW(ad_sensor_mask_LR);														
-														temp16 = change_to_LR(ad_alarm_exts);																						
-														uart_q[i].tdata[9] = HIGH(temp16);
-														uart_q[i].tdata[10] = LOW(temp16);
-														temp16 = change_to_LR(ad_alarm_base);
-														uart_q[i].tdata[11] = HIGH(temp16);
-														uart_q[i].tdata[12] = LOW(temp16);														
-														uart_q[i].tdata[13] = (Byte)(!gl_dk_status);                     
-														uart_q[i].len = 15;												
-													} 
-													else
-													{ //无空闲buffer, 丢弃本命令
-														//检查: 若有队列项正在发送, 等待它完成
-														while (uart_q_index != 0xFF);	//若死锁,将引起 WDT 复位				           
-													}                
-													break;
+                                //在UART队列中找空闲Buffer
+                                i = uart_get_buffer();
+                                if (i < UART_QUEUE_NUM)
+                                { //找到了空闲buffer, 写入data
+                                    uart_q[i].tdata[0] = FRAME_STX;
+                                    uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
+                                    uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
+                                    uart_q[i].tdata[3] = 0x0A;
+                                    uart_q[i].tdata[4] = CMD_ZL_PRE;
+                                    uart_q[i].tdata[5] = 0x08;
+                                    uart_q[i].tdata[6] = 0x1A;													
+                                    uart_q[i].tdata[7] = HIGH(ad_sensor_mask_LR);    
+                                    uart_q[i].tdata[8] = LOW(ad_sensor_mask_LR);														
+                                    temp16 = change_to_LR(ad_alarm_exts);																						
+                                    uart_q[i].tdata[9] = HIGH(temp16);
+                                    uart_q[i].tdata[10] = LOW(temp16);
+                                    temp16 = change_to_LR(ad_alarm_base);
+                                    uart_q[i].tdata[11] = HIGH(temp16);
+                                    uart_q[i].tdata[12] = LOW(temp16);														
+                                    uart_q[i].tdata[13] = (Byte)(!gl_dk_status);                     
+                                    uart_q[i].len = 15;												
+                                } 
+                                else
+                                { //无空闲buffer, 丢弃本命令
+                                    //检查: 若有队列项正在发送, 等待它完成
+                                    while (uart_q_index != 0xFF);	//若死锁,将引起 WDT 复位				           
+                                }                
+                                break;
 
 							 case 0x14: //读瞬态张力
-													//在UART队列中找空闲Buffer
-													i = uart_get_buffer();
-													if (i < UART_QUEUE_NUM)
-													{ //找到了空闲buffer, 写入data
-														uart_q[i].tdata[0] = FRAME_STX;
-														uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
-														uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
-														uart_q[i].tdata[3] = 0x23;
-														uart_q[i].tdata[4] = CMD_ZL_PRE;
-														uart_q[i].tdata[5] = 0x21;
-														uart_q[i].tdata[6] = 0x1C;																																																				
-														for (j=0; j<7; j++)
-														{ //左7~1
-															temp16 = ad_chn_sample[AREA_L_INDEX[j]].w;
-															uart_q[i].tdata[7+(j<<1)] = HIGH(temp16);
-															uart_q[i].tdata[8+(j<<1)] = LOW(temp16);
-														}
-														uart_q[i].tdata[21] = 0;
-														uart_q[i].tdata[22] = 0;														
-													  for (j=0; j<7; j++)
-														{ //右7~1
-															temp16 = ad_chn_sample[AREA_R_INDEX[j]].w;
-															uart_q[i].tdata[23+(j<<1)] = HIGH(temp16);
-															uart_q[i].tdata[24+(j<<1)] = LOW(temp16);
-														}
-														uart_q[i].tdata[37] = 0;
-														uart_q[i].tdata[38] = 0;																																																						
-														uart_q[i].len = 40;
-													}
-													else
-													{ //无空闲buffer, 丢弃本命令
-														//检查: 若有队列项正在发送, 等待它完成
-														while (uart_q_index != 0xFF);	//若死锁,将引起 WDT 复位				           
-													}                
-													break;
+                                //在UART队列中找空闲Buffer
+                                i = uart_get_buffer();
+                                if (i < UART_QUEUE_NUM)
+                                { //找到了空闲buffer, 写入data
+                                    uart_q[i].tdata[0] = FRAME_STX;
+                                    uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
+                                    uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
+                                    uart_q[i].tdata[3] = 0x23;
+                                    uart_q[i].tdata[4] = CMD_ZL_PRE;
+                                    uart_q[i].tdata[5] = 0x21;
+                                    uart_q[i].tdata[6] = 0x1C;																																																				
+                                    for (j=0; j<7; j++)
+                                    { //左7~1
+                                        temp16 = ad_chn_sample[AREA_L_INDEX[j]].w;
+                                        uart_q[i].tdata[7+(j<<1)] = HIGH(temp16);
+                                        uart_q[i].tdata[8+(j<<1)] = LOW(temp16);
+                                    }
+                                    uart_q[i].tdata[21] = 0;
+                                    uart_q[i].tdata[22] = 0;														
+                                  for (j=0; j<7; j++)
+                                    { //右7~1
+                                        temp16 = ad_chn_sample[AREA_R_INDEX[j]].w;
+                                        uart_q[i].tdata[23+(j<<1)] = HIGH(temp16);
+                                        uart_q[i].tdata[24+(j<<1)] = LOW(temp16);
+                                    }
+                                    uart_q[i].tdata[37] = 0;
+                                    uart_q[i].tdata[38] = 0;																																																						
+                                    uart_q[i].len = 40;
+                                }
+                                else
+                                { //无空闲buffer, 丢弃本命令
+                                    //检查: 若有队列项正在发送, 等待它完成
+                                    while (uart_q_index != 0xFF);	//若死锁,将引起 WDT 复位				           
+                                }                
+                                break;
 											
 							 case 0x15: //读静态张力基准
-													//在UART队列中找空闲Buffer
-													i = uart_get_buffer();
-													if (i < UART_QUEUE_NUM)
-													{ //找到了空闲buffer, 写入data
-														uart_q[i].tdata[0] = FRAME_STX;
-														uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
-														uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
-														uart_q[i].tdata[3] = 0x23;
-														uart_q[i].tdata[4] = CMD_ZL_PRE;
-														uart_q[i].tdata[5] = 0x21;
-														uart_q[i].tdata[6] = 0x1D;																																																				
-														for (j=0; j<7; j++)
-														{ //左7~1
-															temp16 = ad_chn_base[AREA_L_INDEX[j]].base;
-															uart_q[i].tdata[7+(j<<1)] = HIGH(temp16);
-															uart_q[i].tdata[8+(j<<1)] = LOW(temp16);
-														}
-														uart_q[i].tdata[21] = 0;
-														uart_q[i].tdata[22] = 0;														
-													  for (j=0; j<7; j++)
-														{ //右7~1
-															temp16 = ad_chn_base[AREA_R_INDEX[j]].base;
-															uart_q[i].tdata[23+(j<<1)] = HIGH(temp16);
-															uart_q[i].tdata[24+(j<<1)] = LOW(temp16);
-														}
-														uart_q[i].tdata[37] = 0;
-														uart_q[i].tdata[38] = 0;																																																						
-														uart_q[i].len = 40;														
-													}  
-													else
-													{ //无空闲buffer, 丢弃本命令
-														//检查: 若有队列项正在发送, 等待它完成
-														while (uart_q_index != 0xFF);	//若死锁,将引起 WDT 复位				           
-													}                
-													break;
+                                //在UART队列中找空闲Buffer
+                                i = uart_get_buffer();
+                                if (i < UART_QUEUE_NUM)
+                                { //找到了空闲buffer, 写入data
+                                    uart_q[i].tdata[0] = FRAME_STX;
+                                    uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
+                                    uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
+                                    uart_q[i].tdata[3] = 0x23;
+                                    uart_q[i].tdata[4] = CMD_ZL_PRE;
+                                    uart_q[i].tdata[5] = 0x21;
+                                    uart_q[i].tdata[6] = 0x1D;																																																				
+                                    for (j=0; j<7; j++)
+                                    { //左7~1
+                                        temp16 = ad_chn_base[AREA_L_INDEX[j]].base;
+                                        uart_q[i].tdata[7+(j<<1)] = HIGH(temp16);
+                                        uart_q[i].tdata[8+(j<<1)] = LOW(temp16);
+                                    }
+                                    uart_q[i].tdata[21] = 0;
+                                    uart_q[i].tdata[22] = 0;														
+                                  for (j=0; j<7; j++)
+                                    { //右7~1
+                                        temp16 = ad_chn_base[AREA_R_INDEX[j]].base;
+                                        uart_q[i].tdata[23+(j<<1)] = HIGH(temp16);
+                                        uart_q[i].tdata[24+(j<<1)] = LOW(temp16);
+                                    }
+                                    uart_q[i].tdata[37] = 0;
+                                    uart_q[i].tdata[38] = 0;																																																						
+                                    uart_q[i].len = 40;														
+                                }  
+                                else
+                                { //无空闲buffer, 丢弃本命令
+                                    //检查: 若有队列项正在发送, 等待它完成
+                                    while (uart_q_index != 0xFF);	//若死锁,将引起 WDT 复位				           
+                                }                
+                                break;
 
 							 case 0x17: //通用应答
-													//在UART队列中找空闲Buffer
-													i = uart_get_buffer();
-													if (i < UART_QUEUE_NUM)
-													{ //找到了空闲buffer, 写入data
-														uart_q[i].tdata[0] = FRAME_STX;
-														uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
-														uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
-														uart_q[i].tdata[3] = 0x04;
-														uart_q[i].tdata[4] = CMD_ZL_PRE;
-														uart_q[i].tdata[5] = 0x02;
-														uart_q[i].tdata[6] = 0x1F;																																									
-														uart_q[i].tdata[7] = gl_addr_origin;													
-														uart_q[i].len = 9;
-													} 
-													else
-													{ //无空闲buffer, 丢弃本命令
-														//检查: 若有队列项正在发送, 等待它完成
-														while (uart_q_index != 0xFF);	//若死锁,将引起 WDT 复位				           
-													}                
-													break;                             
+                                //在UART队列中找空闲Buffer
+                                i = uart_get_buffer();
+                                if (i < UART_QUEUE_NUM)
+                                { //找到了空闲buffer, 写入data
+                                    uart_q[i].tdata[0] = FRAME_STX;
+                                    uart_q[i].tdata[1] = msg_buf[1];	    //目的地址
+                                    uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
+                                    uart_q[i].tdata[3] = 0x04;
+                                    uart_q[i].tdata[4] = CMD_ZL_PRE;
+                                    uart_q[i].tdata[5] = 0x02;
+                                    uart_q[i].tdata[6] = 0x1F;																																									
+                                    uart_q[i].tdata[7] = gl_addr_origin;													
+                                    uart_q[i].len = 9;
+                                } 
+                                else
+                                { //无空闲buffer, 丢弃本命令
+                                    //检查: 若有队列项正在发送, 等待它完成
+                                    while (uart_q_index != 0xFF);	//若死锁,将引起 WDT 复位				           
+                                }                
+                                break;                             
 												
 							 case 0x55: //AD采样值传输控制
-													if (msg_buf[6] == 0x00)		                
-														uart_send_samp = 0;   //停止传输				   
-													else                
-														uart_send_samp = 1;	  //开始传输                   
-													break;
+                                if (msg_buf[6] == 0x00)		                
+                                    uart_send_samp = 0;   //停止传输				   
+                                else                
+                                    uart_send_samp = 1;	  //开始传输                   
+                                break;
 												
 							 case 0x40: //设置静态张力值范围
-													//1. 写入flash
-													flash_enable();                              
-													flash_erase(EEPROM_SECTOR3);                                        
-													flash_write(msg_buf[6], EEPROM_SECTOR3 + 1);  
-													flash_write(msg_buf[7], EEPROM_SECTOR3 + 2);
-													flash_write(msg_buf[8], EEPROM_SECTOR3 + 3);  
-													flash_write(msg_buf[9], EEPROM_SECTOR3 + 4);
-													flash_write(0x5a, EEPROM_SECTOR3);                                                              
-													flash_disable();
-													//2. 更新变量
-													ad_still_dn = ((Uint16)msg_buf[6] << 8) + msg_buf[7];	 //下限
-													ad_still_up = ((Uint16)msg_buf[8] << 8) + msg_buf[9];	 //上限
-													//3. 同步更新对应采样值
-													//ad_still_dn_s = (Uint16)(((Uint32)ad_still_dn  * SENSOR_RATIO_SAMP) >> SENSOR_RATIO_FS);   //静态拉力值下限
-													//ad_still_up_s = (Uint16)(((Uint32)ad_still_up  * SENSOR_RATIO_SAMP) >> SENSOR_RATIO_FS);	 //静态拉力值上限									  
-													ad_still_dn_s = ad_still_dn;    //ZZX: 直接使用采样值
-													ad_still_up_s = ad_still_up;
-													//4. 检查当前静态张力值
-													if (system_status == SYS_CHECK)
-													{	//已开始运行检测
-														for (i=0; i<14; i++)
-														{
-															check_still_stress(i);
-														}
-													}
-													break;
+                                //1. 写入flash
+                                flash_enable();                              
+                                flash_erase(EEPROM_SECTOR3);                                        
+                                flash_write(msg_buf[6], EEPROM_SECTOR3 + 1);  
+                                flash_write(msg_buf[7], EEPROM_SECTOR3 + 2);
+                                flash_write(msg_buf[8], EEPROM_SECTOR3 + 3);  
+                                flash_write(msg_buf[9], EEPROM_SECTOR3 + 4);
+                                flash_write(0x5a, EEPROM_SECTOR3);                                                              
+                                flash_disable();
+                                //2. 更新变量
+                                ad_still_dn = ((Uint16)msg_buf[6] << 8) + msg_buf[7];	 //下限
+                                ad_still_up = ((Uint16)msg_buf[8] << 8) + msg_buf[9];	 //上限
+                                //3. 同步更新对应采样值
+                                //ad_still_dn_s = (Uint16)(((Uint32)ad_still_dn  * SENSOR_RATIO_SAMP) >> SENSOR_RATIO_FS);   //静态拉力值下限
+                                //ad_still_up_s = (Uint16)(((Uint32)ad_still_up  * SENSOR_RATIO_SAMP) >> SENSOR_RATIO_FS);	 //静态拉力值上限									  
+                                ad_still_dn_s = ad_still_dn;    //ZZX: 直接使用采样值
+                                ad_still_up_s = ad_still_up;
+                                //4. 检查当前静态张力值
+                                if (system_status == SYS_CHECK)
+                                {	//已开始运行检测
+                                    for (i=0; i<14; i++)
+                                    {
+                                        check_still_stress(i);
+                                    }
+                                }
+                                break;
 																									
 							 case 0x50: //设置报警阀值 (仅上限)
-													//1. 写入flash并更新变量
-													flash_enable();                              
-													flash_erase(EEPROM_SECTOR4);                                        
-													flash_write(msg_buf[6], EEPROM_SECTOR4 + 1); 	 //下限浮动值，比例
-													//ZZX: 存入 Flash 的下限比例, 目前没有被读取使用						
-													for (j=0; j<7; j++)
-													{ //左1 ~7
-														ad_still_Dup[AREA_L_INDEX[j]] = msg_buf[7 + j];	 
-														flash_write(msg_buf[7 + j], EEPROM_SECTOR4 + 2 + j);
-													}							 
-													for (j=0; j<7; j++)
-													{ //右1 ~7
-														ad_still_Dup[AREA_R_INDEX[j]] = msg_buf[15 + j];	 
-														flash_write(msg_buf[15 + j], EEPROM_SECTOR4 + 10 + j);
-													}				
-													flash_write(0x5a, EEPROM_SECTOR4);                                                               
-													flash_disable();													
-													//2.同步更新采样域值
-													for (j=0; j<14; j++)
-													{
-														ad_still_Dup_s[j] = ad_still_Dup[j];
-													}													
-													//下限固定取基准值的 1/3
-													//3. 更新换算后的张力报警上限(采样值)													
-													if (system_status == SYS_CHECK)
-													{	//已开始运行检测
-														for (i=0; i<14; i++)
-														{					       
-															if ((1023 - ad_chn_base[i].base) > ad_still_Dup_s[i])
-																ad_chn_base[i].base_up = ad_chn_base[i].base + ad_still_Dup_s[i];
-															else
-																ad_chn_base[i].base_up = 1023; 					  
-														}
-													}													
-													break;	
+                                //1. 写入flash并更新变量
+                                flash_enable();                              
+                                flash_erase(EEPROM_SECTOR4);                                        
+                                flash_write(msg_buf[6], EEPROM_SECTOR4 + 1); 	 //下限浮动值，比例
+                                //ZZX: 存入 Flash 的下限比例, 目前没有被读取使用						
+                                for (j=0; j<7; j++)
+                                { //左1 ~7
+                                    ad_still_Dup[AREA_L_INDEX[j]] = msg_buf[7 + j];	 
+                                    flash_write(msg_buf[7 + j], EEPROM_SECTOR4 + 2 + j);
+                                }							 
+                                for (j=0; j<7; j++)
+                                { //右1 ~7
+                                    ad_still_Dup[AREA_R_INDEX[j]] = msg_buf[15 + j];	 
+                                    flash_write(msg_buf[15 + j], EEPROM_SECTOR4 + 10 + j);
+                                }				
+                                flash_write(0x5a, EEPROM_SECTOR4);                                                               
+                                flash_disable();													
+                                //2.同步更新采样域值
+                                for (j=0; j<14; j++)
+                                {
+                                    ad_still_Dup_s[j] = ad_still_Dup[j];
+                                }													
+                                //下限固定取基准值的 1/3
+                                //3. 更新换算后的张力报警上限(采样值)													
+                                if (system_status == SYS_CHECK)
+                                {	//已开始运行检测
+                                    for (i=0; i<14; i++)
+                                    {					       
+                                        if ((1023 - ad_chn_base[i].base) > ad_still_Dup_s[i])
+                                            ad_chn_base[i].base_up = ad_chn_base[i].base + ad_still_Dup_s[i];
+                                        else
+                                            ad_chn_base[i].base_up = 1023; 					  
+                                    }
+                                }													
+                                break;	
 															
 							 case 0x60: //设置声光报警时间	              
-													//1. 写入flash				  
-													flash_enable();                              
-													flash_erase(EEPROM_SECTOR5);                                        
-													flash_write(msg_buf[6], EEPROM_SECTOR5 + 1);  
-													flash_write(0x5a, EEPROM_SECTOR5);                                                              
-													flash_disable();
-													//2. 更新变量
-													beep_during_temp = (Uint16)(((Uint32)msg_buf[6] * 1000) / SCHEDULER_TICK);				  
-													break;
+                                //1. 写入flash				  
+                                flash_enable();                              
+                                flash_erase(EEPROM_SECTOR5);                                        
+                                flash_write(msg_buf[6], EEPROM_SECTOR5 + 1);  
+                                flash_write(0x5a, EEPROM_SECTOR5);                                                              
+                                flash_disable();
+                                //2. 更新变量
+                                beep_during_temp = (Uint16)(((Uint32)msg_buf[6] * 1000) / SCHEDULER_TICK);				  
+                                break;
 
 							 case 0x70: //设置联动报警输出时间	              	              
-													//1. 写入flash				  
-													flash_enable();                              
-													flash_erase(EEPROM_SECTOR6);                                        
-													flash_write(msg_buf[6], EEPROM_SECTOR6 + 1);  
-													flash_write(0x5a, EEPROM_SECTOR6);                                                              
-													flash_disable();
-													//2. 更新变量
-													ld_during_temp = (Uint16)(((Uint32)msg_buf[6] * 1000) / SCHEDULER_TICK);				  				  
-													break;	
+                                //1. 写入flash				  
+                                flash_enable();                              
+                                flash_erase(EEPROM_SECTOR6);                                        
+                                flash_write(msg_buf[6], EEPROM_SECTOR6 + 1);  
+                                flash_write(0x5a, EEPROM_SECTOR6);                                                              
+                                flash_disable();
+                                //2. 更新变量
+                                ld_during_temp = (Uint16)(((Uint32)msg_buf[6] * 1000) / SCHEDULER_TICK);				  				  
+                                break;	
 
                             case 0xF1: //设置传感器采样偏差---->消除电路上的误差                  
                                 //1. 写入flash并更新变量
@@ -617,7 +618,12 @@ void comm_task(void)
                                 flash_write(0x5a, EEPROM_SECTOR7);
                                 flash_disable(); 
 
-                                break;                             
+                                break;     
+
+                            //2016-12-07新增
+                            case 0xF8://读取报警详细信息                                
+                                get_alarm_detail_info();
+                                break;
                 }//end switch
 				break;													
 			}//end switch	命令类型
@@ -775,4 +781,131 @@ Uint16 change_to_LR(Uint16 val)
 	} 
 	
 	return temp16;	
+}
+
+//2016-12-07新增
+void get_alarm_detail_info(void)
+{
+    Byte i,j;
+    Uint16 temp16;
+    
+    //1、返回配置信息   
+    //在UART队列中找空闲Buffer
+    i = uart_get_buffer();
+    if (i < UART_QUEUE_NUM)
+    { 
+        //找到了空闲buffer, 写入data
+        uart_q[i].tdata[0] = FRAME_STX;
+        uart_q[i].tdata[1] = 0x01;     	      //目的地址
+        uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
+        uart_q[i].tdata[3] = 0x1E;
+        uart_q[i].tdata[4] = CMD_ZL_PRE;															
+        uart_q[i].tdata[5] = 0x1C;
+        uart_q[i].tdata[6] = 0x08;
+        uart_q[i].tdata[7] = HIGH(ad_sensor_mask_LR);    
+        uart_q[i].tdata[8] = LOW(ad_sensor_mask_LR);
+        uart_q[i].tdata[9]  = HIGH(ad_still_dn);
+        uart_q[i].tdata[10] = LOW(ad_still_dn);
+        uart_q[i].tdata[11] = HIGH(ad_still_up);
+        uart_q[i].tdata[12] = LOW(ad_still_up);
+        uart_q[i].tdata[13]  = 66;   //ad_still_Ddn;
+        for (j=0; j<7; j++)
+          uart_q[i].tdata[14 + j] = ad_still_Dup[AREA_L_INDEX[j]]; 
+        uart_q[i].tdata[21] = 0;
+        for (j=0; j<7; j++)
+          uart_q[i].tdata[22 + j] = ad_still_Dup[AREA_R_INDEX[j]]; 
+        uart_q[i].tdata[29] = 0;																											
+        uart_q[i].tdata[30] = system_2or1;
+        uart_q[i].tdata[31] = gl_addr_origin;
+        uart_q[i].tdata[32] = (Byte)(((Uint32)beep_during_temp * SCHEDULER_TICK) / 1000);	//声光报警输出时间
+        uart_q[i].tdata[33] = (Byte)(((Uint32)ld_during_temp * SCHEDULER_TICK) / 1000);	  //联动输出时间              																					
+        uart_q[i].len = 35;
+    }
+          
+    //2、读取报警信息
+    //在UART队列中找空闲Buffer
+    i = uart_get_buffer();
+    if (i < UART_QUEUE_NUM)
+    { 
+        //找到了空闲buffer, 写入data
+        uart_q[i].tdata[0] = FRAME_STX;
+        uart_q[i].tdata[1] = 0x01;	          //目的地址
+        uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
+        uart_q[i].tdata[3] = 0x0A;
+        uart_q[i].tdata[4] = CMD_ZL_PRE;
+        uart_q[i].tdata[5] = 0x08;
+        uart_q[i].tdata[6] = 0x1A;													
+        uart_q[i].tdata[7] = HIGH(ad_sensor_mask_LR);    
+        uart_q[i].tdata[8] = LOW(ad_sensor_mask_LR);														
+        temp16 = change_to_LR(AlarmDetailInfo.ExternalAlarm);																						
+        uart_q[i].tdata[9] = HIGH(temp16);
+        uart_q[i].tdata[10] = LOW(temp16);
+        temp16 = change_to_LR(AlarmDetailInfo.StaticAlarm);
+        uart_q[i].tdata[11] = HIGH(temp16);
+        uart_q[i].tdata[12] = LOW(temp16);														
+        uart_q[i].tdata[13] = !AlarmDetailInfo.DoorKeepAlarm;                     
+        uart_q[i].len = 15;												
+    } 
+    
+    //3、读瞬态张力
+    //在UART队列中找空闲Buffer
+    i = uart_get_buffer();
+    if (i < UART_QUEUE_NUM)
+    { //找到了空闲buffer, 写入data
+        uart_q[i].tdata[0] = FRAME_STX;
+        uart_q[i].tdata[1] = 0x01;	          //目的地址
+        uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
+        uart_q[i].tdata[3] = 0x23;
+        uart_q[i].tdata[4] = CMD_ZL_PRE;
+        uart_q[i].tdata[5] = 0x21;
+        uart_q[i].tdata[6] = 0x1C;																																																				
+        for (j=0; j<7; j++)
+        { //左7~1
+            temp16 = AlarmDetailInfo.InstantSampleValue[AREA_L_INDEX[j]].w;
+            uart_q[i].tdata[7+(j<<1)] = HIGH(temp16);
+            uart_q[i].tdata[8+(j<<1)] = LOW(temp16);
+        }
+        uart_q[i].tdata[21] = 0;
+        uart_q[i].tdata[22] = 0;														
+        for (j=0; j<7; j++)
+        { //右7~1
+            temp16 = AlarmDetailInfo.InstantSampleValue[AREA_R_INDEX[j]].w;
+            uart_q[i].tdata[23+(j<<1)] = HIGH(temp16);
+            uart_q[i].tdata[24+(j<<1)] = LOW(temp16);
+        }
+        uart_q[i].tdata[37] = 0;
+        uart_q[i].tdata[38] = 0;																																																						
+        uart_q[i].len = 40;
+    }
+    
+    //4、读静态张力基准
+    //在UART队列中找空闲Buffer
+    i = uart_get_buffer();
+    if (i < UART_QUEUE_NUM)
+    { //找到了空闲buffer, 写入data
+        uart_q[i].tdata[0] = FRAME_STX;
+        uart_q[i].tdata[1] = 0x01;	          //目的地址
+        uart_q[i].tdata[2] = gl_comm_addr;	  //源地址																 
+        uart_q[i].tdata[3] = 0x23;
+        uart_q[i].tdata[4] = CMD_ZL_PRE;
+        uart_q[i].tdata[5] = 0x21;
+        uart_q[i].tdata[6] = 0x1D;																																																				
+        for (j=0; j<7; j++)
+        { //左7~1
+            temp16 = AlarmDetailInfo.StaticBaseValue[AREA_L_INDEX[j]].base;
+            uart_q[i].tdata[7+(j<<1)] = HIGH(temp16);
+            uart_q[i].tdata[8+(j<<1)] = LOW(temp16);
+        }
+        uart_q[i].tdata[21] = 0;
+        uart_q[i].tdata[22] = 0;														
+        for (j=0; j<7; j++)
+        { //右7~1
+            temp16 = AlarmDetailInfo.StaticBaseValue[AREA_R_INDEX[j]].base;
+            uart_q[i].tdata[23+(j<<1)] = HIGH(temp16);
+            uart_q[i].tdata[24+(j<<1)] = LOW(temp16);
+        }
+        uart_q[i].tdata[37] = 0;
+        uart_q[i].tdata[38] = 0;																																																						
+        uart_q[i].len = 40;														
+    }  
 }

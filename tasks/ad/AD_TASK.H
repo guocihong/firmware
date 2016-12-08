@@ -30,5 +30,6 @@ void  ad_task_init(void);
 void  ad_task(void);
 void  check_still_stress(index);
 
+void save_alarm_detail_info(void);
 
 #endif  /* _AD_TASK_H_ */

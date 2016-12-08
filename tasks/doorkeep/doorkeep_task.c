@@ -25,13 +25,11 @@
 
 /*_____ D E C L A R A T I O N ______________________________________________*/
 extern bdata  bit   gl_dk_status;    //门磁开关状态（每1s动态检测）: 1 - 闭合; 0 - 打开(需要报警)                    
-extern  data  Byte  gl_dk_tick;  	   //门磁检测计时tick
+extern  data  Byte  gl_dk_tick;  	 //门磁检测计时tick
+extern idata  Byte  system_status;   //系统状态	
+static  data  Byte  dk_read_state;   //task state
 
-extern  idata Byte  system_status;   //系统状态	
-
-         data Byte  dk_read_state;   //task state
-
-
+extern void save_alarm_detail_info(void);
 
 /*F**************************************************************************
 * NAME: doorkeep_task_init
@@ -95,6 +93,10 @@ void doorkeep_task(void)
                       if ((gl_dk_status == 1) && (bDoorKeeper == 0))
                       { //门磁已经打开
                         gl_dk_status = 0;
+                          
+                        //2016-12-07新增
+                        //保存报警详细信息
+                        save_alarm_detail_info();
                       }						  
                       else if ((gl_dk_status == 0) && (bDoorKeeper == 1))
                       { //门磁已经闭合

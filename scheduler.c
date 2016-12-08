@@ -25,7 +25,7 @@
 
 /*_____ D E F I N I T I O N ________________________________________________*/
 /* 系统计时 */
-extern idata  Byte    gl_ack_tick;	  /* 应答延时计时 tick */
+extern idata  Uint16  gl_ack_tick;	  /* 应答延时计时 tick */
 extern  data  Uint16  gl_delay_tick;  /* 通用延时用tick */ 
 
 /* for UART1/2 : 超时处理 */

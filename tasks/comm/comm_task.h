@@ -35,6 +35,6 @@ Byte  uart_get_buffer(void);
 Byte  uart2_get_buffer(void);
 
 Uint16 change_to_LR(Uint16 val);
-
+void get_alarm_detail_info(void);
 
 #endif  /* _COMM_TASK_H_ */

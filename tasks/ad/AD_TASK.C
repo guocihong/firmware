@@ -77,7 +77,11 @@ extern const  Byte   AREA_R_INDEX[7];  //右防区各道对应的板上(程序) index
 /* for this task: 用于基准值跟踪 */
 static idata  Byte   md_point[14];     //用于基准值跟踪的计量点数
 
+/* Doorkeep(门磁) */
+extern bdata  bit    gl_dk_status;    //门磁开关状态（每1s动态检测）: 1 - 闭合; 0 - 打开(需要报警) 
 
+//2016-12-07新增
+extern xdata sAlarmDetailInfo  AlarmDetailInfo;//保存最后一次报警详细信息
 
 /*F**************************************************************************
 * NAME: ad_task_init
@@ -357,6 +361,10 @@ void ad_task(void)
                 //清缓慢张紧跟踪变量
                 md_point[index] = 0;   //用于基准值跟踪的计量点数
                 //}
+                
+                //2016-12-07新增
+                //保存报警详细信息
+                save_alarm_detail_info();
               }
               else if ((ad_chn_over[index] & 0x0F) == 0x00)
               { //无报警
@@ -420,4 +428,18 @@ void check_still_stress(index)
   
   //控制杆不存在静态报警，只存在外力报警
   ad_alarm_base &= ~(1 << 9);
+}
+
+void save_alarm_detail_info(void)
+{
+    Byte i;
+    
+    AlarmDetailInfo.DoorKeepAlarm = (Byte)gl_dk_status;
+    AlarmDetailInfo.StaticAlarm = ad_alarm_base;
+    AlarmDetailInfo.ExternalAlarm = ad_alarm_exts;
+    
+    for (i = 0; i < 14; i++) {
+        AlarmDetailInfo.StaticBaseValue[i].base = ad_chn_base[i].base;
+        AlarmDetailInfo.InstantSampleValue[i].w = ad_chn_sample[i].w;
+    }
 }
